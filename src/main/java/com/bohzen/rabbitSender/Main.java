@@ -15,14 +15,15 @@ public class Main {
     public static void main(String[] args) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
+        String message = String.join(" ", args);
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-            final String message = "HELLO";
-            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-            System.out.println("[X] Sent '" + message + "'");
+            for(int i=0;i<5;i++) {
+                channel.basicPublish("", QUEUE_NAME, null, (message+" - "+i).getBytes());
+                System.out.println("[X] Sent '" + message + "'");
+            }
         }
-
     }
 
 }

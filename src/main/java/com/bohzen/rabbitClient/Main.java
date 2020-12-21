@@ -19,11 +19,25 @@ public class Main {
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
-        channel.queueDeclare(QUEUE_NAME,false,false,false,null);
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
         DeliverCallback callback = (consumerTag, message) -> {
             String text = new String(message.getBody(), StandardCharsets.UTF_8);
             System.out.println(" [x] Received '" + text + "'");
+            try {
+                doWork(text);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                System.out.println(" [x] done ");
+            }
         };
-        channel.basicConsume(QUEUE_NAME,true,callback,consumerTag -> {});
+        channel.basicConsume(QUEUE_NAME, true, callback, consumerTag -> {
+        });
+    }
+
+    private static void doWork(String task) throws InterruptedException {
+        for (char c : task.toCharArray()) {
+            if (c == '.') Thread.sleep(1000);
+        }
     }
 }
