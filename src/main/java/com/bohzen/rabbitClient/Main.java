@@ -12,32 +12,21 @@ import java.util.concurrent.TimeoutException;
  * @author Pavel Bozhenko <bozhenko@rekfost.ru>
  */
 public class Main {
-    private final static String QUEUE_NAME = "hello";
+    private static final String EXCHANGE_NAME = "logs";
 
     public static void main(String[] args) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        channel.exchangeDeclare(EXCHANGE_NAME,"fanout");
+        String queueName = channel.queueDeclare().getQueue();
+        channel.queueBind(queueName,EXCHANGE_NAME,"");
         DeliverCallback callback = (consumerTag, message) -> {
             String text = new String(message.getBody(), StandardCharsets.UTF_8);
             System.out.println(" [x] Received '" + text + "'");
-            try {
-                doWork(text);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                System.out.println(" [x] done ");
-            }
         };
-        channel.basicConsume(QUEUE_NAME, true, callback, consumerTag -> {
+        channel.basicConsume(queueName, true, callback, consumerTag -> {
         });
-    }
-
-    private static void doWork(String task) throws InterruptedException {
-        for (char c : task.toCharArray()) {
-            if (c == '.') Thread.sleep(1000);
-        }
     }
 }

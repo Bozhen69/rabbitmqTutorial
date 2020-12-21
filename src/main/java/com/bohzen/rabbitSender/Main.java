@@ -1,5 +1,6 @@
 package com.bohzen.rabbitSender;
 
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -10,20 +11,20 @@ import java.util.concurrent.TimeoutException;
  * @author Pavel Bozhenko <bozhenko@rekfost.ru>
  */
 public class Main {
-    private final static String QUEUE_NAME = "hello";
+    private static final String EXCHANGE_NAME = "logs";
 
     public static void main(String[] args) throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
-        String message = String.join(" ", args);
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+            channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.FANOUT);
+            String message = args.length < 1 ? "info: Hello World!" :
+                    String.join(" ", args);
             for(int i=0;i<5;i++) {
-                channel.basicPublish("", QUEUE_NAME, null, (message+" - "+i).getBytes());
+                channel.basicPublish(EXCHANGE_NAME, "", null, (message+" - "+i).getBytes());
                 System.out.println("[X] Sent '" + message + "'");
             }
         }
     }
-
 }
